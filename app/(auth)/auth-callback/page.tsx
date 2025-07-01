@@ -1,0 +1,39 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
+
+export default function AuthCallbackPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { setToken, setUser, checkAuth } = useAuthStore();
+
+  useEffect(() => {
+    const token = searchParams.get("token");
+    const error = searchParams.get("error");
+
+    if (error) {
+      router.push(`/login?error=${encodeURIComponent(error)}`);
+      return;
+    }
+
+    if (token) {
+      document.cookie = `auth-token=${token}; path=/; max-age=${7 * 24 * 60 * 60}`;
+      checkAuth().then(() => {
+        router.push("/dashboard");
+      });
+    } else {
+      router.push("/login");
+    }
+  }, [searchParams, router, setToken, setUser, checkAuth]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Processing authentication...</p>
+      </div>
+    </div>
+  );
+}
