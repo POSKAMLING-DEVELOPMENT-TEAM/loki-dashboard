@@ -58,7 +58,9 @@ export const useAuthStore = create<AuthStore>()(
           });
         } catch (error: any) {
           set({
-            error: error.response?.data?.message || "Login failed",
+            error:
+              error.response?.data?.message ||
+              "Incorrect email or password. Please try again.",
             isLoading: false,
           });
           throw error;
@@ -133,13 +135,13 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: "auth-storage",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
+      partialize: state => ({
         user: state.user,
         token: state.token,
         roles: state.roles,
         stores: state.stores,
         isAuthenticated: state.isAuthenticated,
       }),
-    },
-  ),
+    }
+  )
 );
