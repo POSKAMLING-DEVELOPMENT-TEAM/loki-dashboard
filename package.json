@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tooltip": "^1.2.7",
     "@types/js-cookie": "^3.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.10.0",

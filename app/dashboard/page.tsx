@@ -10,15 +10,15 @@ export default function DashboardPage() {
   const { user, roles, stores, isAuthenticated, logout, checkAuth } =
     useAuthStore();
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  // useEffect(() => {
+  //   checkAuth();
+  // }, [checkAuth]);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace("/login");
-    }
-  }, [isAuthenticated, router]);
+  // useEffect(() => {
+  //   if (!isAuthenticated) {
+  //     router.replace("/login");
+  //   }
+  // }, [isAuthenticated, router]);
 
   const handleLogout = () => {
     logout();

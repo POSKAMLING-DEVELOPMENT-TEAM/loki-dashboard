@@ -72,7 +72,7 @@ export const authApi = {
         ],
       };
     }
-    const response = await apiClient.post("/auth/login", credentials);
+    const response = await apiClient.post("/v1/auth/login", credentials);
     return response.data;
   },
 
@@ -109,12 +109,12 @@ export const authApi = {
         ],
       };
     }
-    const response = await apiClient.get("/auth/profile");
+    const response = await apiClient.get("/v1/auth/me");
     return response.data;
   },
 
   logout: async (): Promise<void> => {
-    await apiClient.post("/auth/logout");
+    await apiClient.post("/v1/auth/logout");
   },
 };
 

@@ -20,6 +20,8 @@ interface AuthActions {
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
   checkAuth: () => Promise<void>;
+  addDummyStore: (store: Store) => void;
+  getDummyStores: () => void;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -27,7 +29,6 @@ type AuthStore = AuthState & AuthActions;
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
-      // Initial State
       user: null,
       token: null,
       roles: [],
@@ -36,7 +37,6 @@ export const useAuthStore = create<AuthStore>()(
       isLoading: false,
       error: null,
 
-      // Actions
       login: async (credentials: LoginCredentials) => {
         try {
           set({ isLoading: true, error: null });
@@ -44,7 +44,6 @@ export const useAuthStore = create<AuthStore>()(
           const response = await authApi.login(credentials);
           const { user, token, roles, stores } = response;
 
-          // Store token in cookies
           Cookies.set("auth-token", token, { expires: 7 });
 
           set({
@@ -56,6 +55,10 @@ export const useAuthStore = create<AuthStore>()(
             isLoading: false,
             error: null,
           });
+
+          if (token === "dummy-token-123") {
+            get().getDummyStores();
+          }
         } catch (error: any) {
           set({
             error:
@@ -71,7 +74,6 @@ export const useAuthStore = create<AuthStore>()(
         try {
           set({ isLoading: true, error: null });
 
-          // Redirect to OAuth provider
           window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth/${provider}`;
         } catch (error: any) {
           set({
@@ -119,6 +121,10 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: true,
             isLoading: false,
           });
+
+          if (token === "dummy-token-123") {
+            get().getDummyStores();
+          }
         } catch (error) {
           Cookies.remove("auth-token");
           set({
@@ -129,6 +135,26 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: false,
             isLoading: false,
           });
+        }
+      },
+
+      addDummyStore: (store: Store) => {
+        if (get().token === "dummy-token-123") {
+          const current = JSON.parse(
+            localStorage.getItem("dummy-stores") || "[]"
+          );
+          const updated = [...current, store];
+          localStorage.setItem("dummy-stores", JSON.stringify(updated));
+          set({ stores: updated });
+        }
+      },
+
+      getDummyStores: () => {
+        if (get().token === "dummy-token-123") {
+          const stores = JSON.parse(
+            localStorage.getItem("dummy-stores") || "[]"
+          );
+          set({ stores });
         }
       },
     }),

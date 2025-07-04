@@ -1,29 +1,63 @@
 "use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/authStore";
 
-export default function DashboardLayout({
-  children,
-}: {
+// import { DashboardHeader } from "@/components/dashboard/header";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import SidebarDashboard from "@/components/sidebar-dashboard";
+import { DashboardHeader } from "@/components/header-dashboard";
+
+interface DashboardLayoutProps {
   children: React.ReactNode;
-}) {
+  title?: string;
+}
+
+const DashboardLayout = ({
+  children,
+  title = "Dashboard",
+}: DashboardLayoutProps) => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isAuthenticated, isLoading } = useAuthStore();
   const router = useRouter();
-  const { stores, isLoading } = useAuthStore();
 
   useEffect(() => {
-    if (!isLoading && stores.length === 0) {
-      router.replace("/create-store");
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
     }
-  }, [stores, isLoading, router]);
+  }, [isAuthenticated, isLoading, router]);
 
-  if (isLoading || stores.length === 0) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading...</span>
       </div>
     );
   }
 
-  return <>{children}</>;
-}
+  if (!isAuthenticated) {
+    return null; // Akan redirect di useEffect
+  }
+
+  return (
+    <div className="flex min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-white">
+      <SidebarDashboard open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
+      <main className="flex-1 overflow-x-hidden min-h-screen flex flex-col">
+        <div className="sticky top-0 z-30">
+          <DashboardHeader
+            title={title}
+            onMenuClick={() => setIsSidebarOpen(true)}
+          />
+        </div>
+        <div className="flex-1 flex justify-center items-start py-8 px-2 md:px-8">
+          <div className="w-full max-w-6xl bg-white/90 rounded-2xl shadow-2xl border border-gray-100 p-4 md:p-8 transition-all duration-300">
+            {children}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default DashboardLayout;

@@ -19,9 +19,11 @@ export default function AuthCallbackPage() {
     }
 
     if (token) {
-      document.cookie = `auth-token=${token}; path=/; max-age=${7 * 24 * 60 * 60}`;
+      document.cookie = `auth-token=${token}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }`;
       checkAuth().then(() => {
-        router.push("/dashboard");
+        router.push("/stores");
       });
     } else {
       router.push("/login");
