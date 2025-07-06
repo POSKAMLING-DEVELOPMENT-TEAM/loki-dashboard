@@ -18,13 +18,13 @@ export default function StoresPage() {
   const [address, setAddress] = useState("");
   const [phone_number, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
-  const [slug, setSlug] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [step, setStep] = useState(1);
-  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  // const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null); comment sementara
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+
   const packageOptions = [
     { key: "gratis", name: "Gratis", desc: "Fitur dasar, cocok untuk pemula." },
     {
@@ -171,7 +171,7 @@ export default function StoresPage() {
     setPhoneError("");
     setEmailError("");
     setError("");
-    setSelectedStoreId(null);
+    // setSelectedStoreId(null);
     setSelectedPackage(null);
   };
 

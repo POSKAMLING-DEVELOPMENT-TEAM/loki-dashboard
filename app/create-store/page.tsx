@@ -66,6 +66,7 @@ export default function CreateStorePage() {
       if (!res.ok) throw new Error("Gagal membuat toko");
       await checkAuth();
       router.replace("/dashboard");
+      /* eslint-disable @typescript-eslint/no-explicit-any */
     } catch (err: any) {
       setError(err.message);
     } finally {

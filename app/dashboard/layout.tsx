@@ -1,22 +1,12 @@
 "use client";
 
-// import { DashboardHeader } from "@/components/dashboard/header";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import SidebarDashboard from "@/components/sidebar-dashboard";
-import { DashboardHeader } from "@/components/header-dashboard";
+import { SidebarDashboard, DashboardHeader } from "@/components/dashboard";
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-  title?: string;
-}
-
-const DashboardLayout = ({
-  children,
-  title = "Dashboard",
-}: DashboardLayoutProps) => {
+export default function Layout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isAuthenticated, isLoading } = useAuthStore();
   const router = useRouter();
@@ -37,7 +27,7 @@ const DashboardLayout = ({
   }
 
   if (!isAuthenticated) {
-    return null; // Akan redirect di useEffect
+    return null;
   }
 
   return (
@@ -46,7 +36,7 @@ const DashboardLayout = ({
       <main className="flex-1 overflow-x-hidden min-h-screen flex flex-col">
         <div className="sticky top-0 z-30">
           <DashboardHeader
-            title={title}
+            title="Dashboard"
             onMenuClick={() => setIsSidebarOpen(true)}
           />
         </div>
@@ -58,6 +48,4 @@ const DashboardLayout = ({
       </main>
     </div>
   );
-};
-
-export default DashboardLayout;
+}
