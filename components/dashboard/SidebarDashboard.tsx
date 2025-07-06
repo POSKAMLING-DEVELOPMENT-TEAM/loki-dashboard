@@ -1,5 +1,11 @@
 "use client";
 
+import Link from "next/link";
+import Image from "next/image";
+import { authApi } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { LogOut, Store as StoreIcon } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -7,20 +13,6 @@ import {
   SheetHeader,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import {
-  Car,
-  LogOut,
-  CarFront,
-  Users,
-  DollarSign,
-  Store as StoreIcon,
-} from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
-import { authApi } from "@/lib/api";
-import Image from "next/image";
-// import AuthApi from "@/lib/auth-api";
 
 const navigationItems = [{ href: "/stores", label: "Store", icon: StoreIcon }];
 
@@ -29,7 +21,10 @@ interface SidebarDashboardProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const SidebarDashboard = ({ open, onOpenChange }: SidebarDashboardProps) => {
+export const SidebarDashboard = ({
+  open,
+  onOpenChange,
+}: SidebarDashboardProps) => {
   const router = useRouter();
   const pathname = usePathname();
   // Dummy user name for avatar
@@ -185,5 +180,3 @@ const SidebarDashboard = ({ open, onOpenChange }: SidebarDashboardProps) => {
     </>
   );
 };
-
-export default SidebarDashboard;

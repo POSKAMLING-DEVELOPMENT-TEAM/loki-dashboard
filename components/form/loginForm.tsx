@@ -28,7 +28,7 @@ export default function LoginForm() {
       await login(data);
       router.push("/stores");
     } catch (error) {
-      // Error is handled by the store
+      console.log(error);
     }
   };
 
@@ -36,7 +36,7 @@ export default function LoginForm() {
     try {
       await loginWithOAuth(provider);
     } catch (error) {
-      // Error is handled by the store
+      console.log(error);
     }
   };
 

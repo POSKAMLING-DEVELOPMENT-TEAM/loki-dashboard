@@ -1,11 +1,8 @@
 "use client";
 
-// External Libraries
-import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Edit2, Trash2, PlusCircle, Filter } from "lucide-react";
 
-// Internal Components & Hooks
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 
