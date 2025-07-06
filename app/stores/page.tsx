@@ -4,13 +4,29 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
-import { Store as StoreIcon, PlusCircle, XCircle } from "lucide-react";
+import {
+  Store as StoreIcon,
+  PlusCircle,
+  XCircle,
+  Mail,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
 
 export default function StoresPage() {
   const router = useRouter();
-  const { stores, isLoading, addDummyStore, getDummyStores, token, logout } =
-    useAuthStore();
+  const {
+    stores,
+    isLoading,
+    addDummyStore,
+    getDummyStores,
+    token,
+    logout,
+    user,
+    updateUser,
+  } = useAuthStore();
   const [showModal, setShowModal] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
@@ -24,6 +40,8 @@ export default function StoresPage() {
   const [step, setStep] = useState(1);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
 
   const packageOptions = [
     { key: "gratis", name: "Gratis", desc: "Fitur dasar, cocok untuk pemula." },
@@ -43,7 +61,40 @@ export default function StoresPage() {
     if (token === "dummy-token-123") {
       getDummyStores();
     }
-  }, [token, getDummyStores]);
+    const isVerified =
+      user?.email_verified_at !== null && user?.email_verified_at !== undefined;
+    setIsEmailVerified(isVerified);
+  }, [token, getDummyStores, user]);
+
+  const handleAddStore = () => {
+    if (!isEmailVerified) {
+      setShowVerificationModal(true);
+      return;
+    }
+    setShowModal(true);
+  };
+
+  const handleResendEmail = async () => {
+    setIsResendingEmail(true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setIsResendingEmail(false);
+    alert("Email verifikasi telah dikirim ulang!");
+  };
+
+  const handleVerifyEmail = () => {
+    if (user) {
+      const updatedUser = {
+        ...user,
+        email_verified_at: new Date().toISOString(),
+      };
+      // Update user in store
+      updateUser(updatedUser);
+      console.log("Email verified at:", updatedUser.email_verified_at);
+    }
+    setIsEmailVerified(true);
+    setShowVerificationModal(false);
+    setShowModal(true);
+  };
 
   const validateName = (value: string) => {
     if (!value.trim()) {
@@ -160,7 +211,6 @@ export default function StoresPage() {
     }
     setStep(1);
     setShowModal(false);
-    // Reset all fields
     setName("");
     setDescription("");
     setAddress("");
@@ -171,7 +221,6 @@ export default function StoresPage() {
     setPhoneError("");
     setEmailError("");
     setError("");
-    // setSelectedStoreId(null);
     setSelectedPackage(null);
   };
 
@@ -200,6 +249,30 @@ export default function StoresPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-indigo-100 to-white py-12 px-4">
       <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl p-10 border border-indigo-100">
+        {/* Email Verification Banner */}
+        {!isEmailVerified && (
+          <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-orange-500" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-orange-800">
+                  Verifikasi email Anda terlebih dahulu
+                </p>
+                <p className="text-xs text-orange-600 mt-1">
+                  Email: {user?.email || "user@example.com"}
+                </p>
+              </div>
+              <Button
+                onClick={() => setShowVerificationModal(true)}
+                size="sm"
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                Verifikasi
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col items-center mb-8">
           <StoreIcon className="w-16 h-16 text-indigo-500 mb-2 drop-shadow" />
           <h1 className="text-3xl font-extrabold text-indigo-800 mb-2 text-center drop-shadow">
@@ -259,11 +332,16 @@ export default function StoresPage() {
           )}
         </div>
         <Button
-          onClick={() => setShowModal(true)}
-          className="w-full flex items-center justify-center gap-2 text-lg font-bold py-4 mt-2 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 shadow-lg"
+          onClick={handleAddStore}
+          className={`w-full flex items-center justify-center gap-2 text-lg font-bold py-4 mt-2 shadow-lg ${
+            isEmailVerified
+              ? "bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
+          disabled={!isEmailVerified}
         >
           <PlusCircle className="w-6 h-6" />
-          Tambah Toko
+          {isEmailVerified ? "Tambah Toko" : "Verifikasi Email Terlebih Dahulu"}
         </Button>
         <Button
           variant="secondary"
@@ -276,6 +354,73 @@ export default function StoresPage() {
           Kembali ke Login
         </Button>
       </div>
+
+      {/* Email Verification Modal */}
+      {showVerificationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 mb-4">
+                <Mail className="h-6 w-6 text-orange-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Verifikasi Email Anda
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Untuk menambahkan toko, Anda perlu memverifikasi email terlebih
+                dahulu.
+              </p>
+
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>Email:</strong> {user?.email || "user@example.com"}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Periksa folder inbox atau spam untuk email verifikasi
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Button
+                  onClick={handleVerifyEmail}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Saya Sudah Verifikasi
+                </Button>
+
+                <Button
+                  onClick={handleResendEmail}
+                  disabled={isResendingEmail}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {isResendingEmail ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600 mr-2"></div>
+                      Mengirim...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" />
+                      Kirim Ulang Email
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  onClick={() => setShowVerificationModal(false)}
+                  variant="ghost"
+                  className="w-full text-gray-500"
+                >
+                  Tutup
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Add Store */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">

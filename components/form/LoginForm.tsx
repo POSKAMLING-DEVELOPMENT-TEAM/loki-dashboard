@@ -1,43 +1,111 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { loginSchema, type LoginFormData } from "@/lib/validation";
+import { useLogin } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
-import { loginSchema, LoginFormData } from "@/lib/validation";
-import { useAuthStore } from "@/store/authStore";
-import { Button } from "../ui/button";
 
 export default function LoginForm() {
   const router = useRouter();
-  const { login, loginWithOAuth, isLoading, error } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const loginMutation = useLogin();
+
+  // Check for success message from URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const message = urlParams.get("message");
+    if (message) {
+      setSuccessMessage(message);
+      // Clear the message from URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, []);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
+    setError,
+    clearErrors,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
+  // Auto-dismiss error after 5 seconds
+  useEffect(() => {
+    if (errors.root || loginMutation.isError) {
+      const timer = setTimeout(() => {
+        clearErrors();
+        loginMutation.reset();
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [errors.root, loginMutation.isError, clearErrors, loginMutation]);
+
+  // Auto-dismiss success message after 8 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 8000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
   const onSubmit = async (data: LoginFormData) => {
+    // Clear previous errors
+    clearErrors();
+
     try {
-      await login(data);
-      router.push("/stores");
-    } catch (error) {
-      console.log(error);
+      const result = await loginMutation.mutateAsync(data);
+
+      // Redirect will be handled by the mutation success
+    } catch (error: any) {
+      // Handle specific error cases
+      if (error.status === 401) {
+        setError("root", {
+          type: "manual",
+          message: "Email atau password salah. Silakan coba lagi.",
+        });
+      } else if (error.status === 404) {
+        setError("root", {
+          type: "manual",
+          message: "User tidak ditemukan.",
+        });
+      } else if (error.status === 422) {
+        setError("root", {
+          type: "manual",
+          message: "Data yang dimasukkan tidak valid.",
+        });
+      } else {
+        setError("root", {
+          type: "manual",
+          message:
+            error.message || "Terjadi kesalahan saat login. Silakan coba lagi.",
+        });
+      }
     }
   };
 
-  const handleOAuthLogin = async (provider: string) => {
-    try {
-      await loginWithOAuth(provider);
-    } catch (error) {
-      console.log(error);
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Check if form is valid before submitting
+    if (Object.keys(errors).length > 0) {
+      return;
     }
+
+    handleSubmit(onSubmit)(e);
   };
 
   return (
@@ -47,37 +115,116 @@ export default function LoginForm() {
           <div>
             <Image
               src="/assets/loki-nobg.png"
-              alt="Montoran Logo"
+              alt="Logo Loki"
               width={200}
               height={200}
               className="mx-auto"
               priority
             />
           </div>
-          <h2 className=" text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+          <h2 className="text-center text-3xl font-extrabold text-gray-900">
+            Masuk ke akun Anda
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Welcome back to Loki Dashboard
+            Selamat datang kembali ke Loki Dashboard
           </p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <AlertCircle className="h-5 w-5 text-red-400" />
-              <div className="ml-3">
-                <p className="text-sm text-red-800">{error}</p>
+        {/* Success message display */}
+        {successMessage && (
+          <div className="bg-green-50 border border-green-200 rounded-md p-4">
+            <div className="flex justify-between items-start">
+              <div className="flex">
+                <svg
+                  className="h-5 w-5 text-green-400 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <div className="ml-3">
+                  <p className="text-sm text-green-800">{successMessage}</p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setSuccessMessage(null)}
+                className="text-green-400 hover:text-green-600 transition-colors"
+                aria-label="Clear message"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+        {/* Single error display */}
+        {(errors.root || loginMutation.isError) && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <div className="flex justify-between items-start">
+              <div className="flex">
+                <AlertCircle className="h-5 w-5 text-red-400 mt-0.5" />
+                <div className="ml-3">
+                  <p className="text-sm text-red-800">
+                    {errors.root?.message ||
+                      loginMutation.error?.message ||
+                      "Terjadi kesalahan saat login"}
+                  </p>
+                  <p className="text-xs text-red-600 mt-1">
+                    Periksa email dan password Anda
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  clearErrors();
+                  loginMutation.reset();
+                }}
+                className="text-red-400 hover:text-red-600 transition-colors"
+                aria-label="Clear error"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleFormSubmit} className="mt-8 space-y-6">
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="sr-only">
-                Email address
+                Alamat email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -87,12 +234,12 @@ export default function LoginForm() {
                   {...register("email")}
                   type="email"
                   autoComplete="email"
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white ${
                     errors.email
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300 bg-white"
+                      ? "border-red-300 focus:ring-red-500"
+                      : "border-gray-300"
                   }`}
-                  placeholder="Email address"
+                  placeholder="Alamat email"
                 />
               </div>
               {errors.email && (
@@ -114,10 +261,10 @@ export default function LoginForm() {
                   {...register("password")}
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
-                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white ${
                     errors.password
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300 bg-white"
+                      ? "border-red-300 focus:ring-red-500"
+                      : "border-gray-300"
                   }`}
                   placeholder="Password"
                 />
@@ -144,13 +291,13 @@ export default function LoginForm() {
           <div>
             <Button
               type="submit"
-              disabled={isSubmitting || isLoading}
+              disabled={loginMutation.isPending}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
-              {isSubmitting || isLoading ? (
+              {loginMutation.isPending ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
               ) : (
-                "Sign in"
+                "Masuk"
               )}
             </Button>
           </div>
@@ -162,7 +309,7 @@ export default function LoginForm() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-gray-50 text-gray-500">
-                  Or continue with
+                  Atau lanjutkan dengan
                 </span>
               </div>
             </div>
@@ -170,7 +317,6 @@ export default function LoginForm() {
             <div className="mt-6">
               <button
                 type="button"
-                onClick={() => handleOAuthLogin("google")}
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-200"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -194,6 +340,19 @@ export default function LoginForm() {
                 <span className="ml-2">Google</span>
               </button>
             </div>
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Belum punya akun?{" "}
+              <button
+                type="button"
+                onClick={() => router.push("/register")}
+                className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+              >
+                Daftar di sini
+              </button>
+            </p>
           </div>
         </form>
       </div>

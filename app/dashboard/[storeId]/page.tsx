@@ -54,15 +54,15 @@ export default function StoreDashboardPage() {
           </Button>
         </div>
         <hr className="my-4 border-gray-200" />
-        {/* Dummy Table Area */}
+        {/* Table Area */}
         <div className="overflow-x-auto rounded-lg border border-gray-100">
           <table className="min-w-full bg-white text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600 uppercase text-xs">
-                <th className="px-4 py-3 text-left font-semibold">Column 1</th>
-                <th className="px-4 py-3 text-left font-semibold">Column 2</th>
+                <th className="px-4 py-3 text-left font-semibold">Kolom 1</th>
+                <th className="px-4 py-3 text-left font-semibold">Kolom 2</th>
                 <th className="px-4 py-3 text-left font-semibold">Status</th>
-                <th className="px-4 py-3 text-left font-semibold">Actions</th>
+                <th className="px-4 py-3 text-left font-semibold">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -88,18 +88,18 @@ export default function StoreDashboardPage() {
                   </td>
                   <td className="px-4 py-3 flex gap-2">
                     <Button
-                      size="sm"
                       variant="outline"
-                      className="flex items-center gap-1 group-hover:border-indigo-400"
+                      size="sm"
+                      className="flex items-center gap-2"
                     >
                       <Edit2 className="w-4 h-4" /> Edit
                     </Button>
                     <Button
+                      variant="outline"
                       size="sm"
-                      variant="destructive"
-                      className="flex items-center gap-1 group-hover:bg-red-600 group-hover:text-white"
+                      className="flex items-center gap-2 text-red-600 hover:text-red-700"
                     >
-                      <Trash2 className="w-4 h-4" /> Delete
+                      <Trash2 className="w-4 h-4" /> Hapus
                     </Button>
                   </td>
                 </tr>

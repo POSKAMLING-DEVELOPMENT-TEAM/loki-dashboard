@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import LoginForm from "@/components/form/LoginForm";
 import { useAuthStore } from "@/store/authStore";
+import LoginForm from "@/components/form/LoginForm";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace("/dashboard");
+      router.replace("/stores");
     }
   }, [isAuthenticated, router]);
 

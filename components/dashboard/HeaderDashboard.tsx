@@ -41,7 +41,7 @@ export function DashboardHeader({ title, onMenuClick }: DashboardHeaderProps) {
             variant="ghost"
             size="icon"
             onClick={logout}
-            title="Logout"
+            title="Keluar"
             className="transition hover:bg-red-50 hover:text-red-600"
           >
             <LogOut className="h-5 w-5" />
