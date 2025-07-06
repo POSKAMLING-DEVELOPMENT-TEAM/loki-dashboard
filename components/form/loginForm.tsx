@@ -26,9 +26,9 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data);
-      router.push("/dashboard");
+      router.push("/stores");
     } catch (error) {
-      // Error is handled by the store
+      console.log(error);
     }
   };
 
@@ -36,7 +36,7 @@ export default function LoginForm() {
     try {
       await loginWithOAuth(provider);
     } catch (error) {
-      // Error is handled by the store
+      console.log(error);
     }
   };
 

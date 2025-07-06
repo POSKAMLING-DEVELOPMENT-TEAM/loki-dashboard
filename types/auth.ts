@@ -21,6 +21,7 @@ export interface Store {
   phone_number?: string;
   email?: string;
   slug?: string;
+  package?: string;
 }
 
 export interface LoginCredentials {
