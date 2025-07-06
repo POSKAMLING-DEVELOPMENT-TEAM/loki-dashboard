@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import LoginForm from "@/components/form/loginForm";
+import LoginForm from "@/components/form/LoginForm";
 import { useAuthStore } from "@/store/authStore";
 
 export default function LoginPage() {

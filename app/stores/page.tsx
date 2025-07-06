@@ -1,9 +1,10 @@
 "use client";
+
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
 import { Store as StoreIcon, PlusCircle, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
 
 export default function StoresPage() {
   const router = useRouter();
@@ -21,7 +22,6 @@ export default function StoresPage() {
   const [phoneError, setPhoneError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [step, setStep] = useState(1);
-  // const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null); comment sementara
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
