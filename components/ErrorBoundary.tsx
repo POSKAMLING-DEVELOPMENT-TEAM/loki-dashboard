@@ -45,17 +45,16 @@ export default class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Something went wrong
+              Terjadi kesalahan
             </h2>
             <p className="text-gray-600 mb-4">
-              We apologize for the inconvenience. Please try refreshing the
-              page.
+              Maaf atas ketidaknyamanannya. Silakan coba segarkan halaman.
             </p>
             <button
               onClick={() => window.location.reload()}
               className="btn-primary"
             >
-              Refresh Page
+              Segarkan Halaman
             </button>
           </div>
         </div>

@@ -1,105 +1,121 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import Cookies from "js-cookie";
-import {
-  AuthState,
-  User,
-  UserRole,
-  Store,
-  LoginCredentials,
-  AuthResponse,
-} from "../types/auth";
+import { AuthStore, LoginCredentials, User } from "../types/auth";
 import { authApi } from "../lib/api";
 
-interface AuthActions {
-  login: (credentials: LoginCredentials) => Promise<void>;
-  loginWithOAuth: (provider: string) => Promise<void>;
-  logout: () => void;
-  setUser: (user: User) => void;
-  setToken: (token: string) => void;
-  setError: (error: string | null) => void;
-  setLoading: (loading: boolean) => void;
-  checkAuth: () => Promise<void>;
-  addDummyStore: (store: Store) => void;
-  getDummyStores: () => void;
+// Define Store type for dummy stores
+interface Store {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  phone_number: string;
+  email: string;
+  package: string;
 }
 
-type AuthStore = AuthState & AuthActions;
-
-export const useAuthStore = create<AuthStore>()(
+export const useAuthStore = create<
+  AuthStore & {
+    stores: Store[];
+    addDummyStore: (store: Store) => void;
+    getDummyStores: () => void;
+  }
+>()(
   persist(
     (set, get) => ({
       user: null,
       token: null,
-      roles: [],
-      stores: [],
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      stores: [],
 
       login: async (credentials: LoginCredentials) => {
         try {
           set({ isLoading: true, error: null });
 
-          const response = await authApi.login(credentials);
-          const { user, token, roles, stores } = response;
+          // Step 1: Call login API to get access token
+          const loginResponse = await authApi.login(credentials);
+          const { access_token } = loginResponse;
 
-          Cookies.set("auth-token", token, { expires: 7 });
+          // Step 2: Store token in cookies
+          Cookies.set("auth-token", access_token, { expires: 7 });
 
+          // Step 3: Get user profile using Bearer token
+          const user = await authApi.getProfile();
+
+          // Step 4: Update state
           set({
             user,
-            token,
-            roles,
-            stores,
+            token: access_token,
             isAuthenticated: true,
             isLoading: false,
             error: null,
           });
-
-          if (token === "dummy-token-123") {
-            get().getDummyStores();
-          }
         } catch (error: any) {
           set({
-            error:
-              error.response?.data?.message ||
-              "Incorrect email or password. Please try again.",
+            error: error.message || "Login failed",
             isLoading: false,
           });
           throw error;
         }
       },
 
-      loginWithOAuth: async (provider: string) => {
+      logout: async () => {
         try {
-          set({ isLoading: true, error: null });
-
-          window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth/${provider}`;
-        } catch (error: any) {
+          await authApi.logout();
+        } catch (error) {
+          // Even if logout fails, we still clear the token
+        } finally {
+          // Clear state regardless of API call success
           set({
-            error: error.message || "OAuth login failed",
-            isLoading: false,
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            error: null,
+            stores: [],
           });
-          throw error;
         }
       },
 
-      logout: () => {
-        Cookies.remove("auth-token");
-        set({
-          user: null,
-          token: null,
-          roles: [],
-          stores: [],
-          isAuthenticated: false,
-          error: null,
+      setUser: (user: User) => {
+        set({ user, isAuthenticated: true, error: null });
+      },
+
+      setToken: (token: string) => {
+        // Store token in cookies for persistence
+        Cookies.set("auth-token", token, {
+          expires: 7, // 7 days
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
         });
       },
 
-      setUser: (user: User) => set({ user }),
-      setToken: (token: string) => set({ token }),
-      setError: (error: string | null) => set({ error }),
-      setLoading: (loading: boolean) => set({ isLoading: loading }),
+      clearAuth: () => {
+        // Clear from cookies
+        Cookies.remove("auth-token");
+
+        // Clear from store
+        set({
+          user: null,
+          isAuthenticated: false,
+          error: null,
+          stores: [],
+        });
+      },
+
+      setLoading: (loading: boolean) => {
+        set({ isLoading: loading });
+      },
+
+      setError: (error: string | null) => {
+        set({ error });
+      },
+
+      updateUser: (updatedUser: User) => {
+        set({ user: updatedUser });
+      },
 
       checkAuth: async () => {
         try {
@@ -110,51 +126,50 @@ export const useAuthStore = create<AuthStore>()(
           }
 
           set({ isLoading: true });
-          const response = await authApi.getProfile();
-          const { user, roles, stores } = response;
+
+          // Get user profile using Bearer token
+          const user = await authApi.getProfile();
 
           set({
             user,
             token,
-            roles,
-            stores,
             isAuthenticated: true,
             isLoading: false,
           });
-
-          if (token === "dummy-token-123") {
-            get().getDummyStores();
-          }
         } catch (error) {
+          // Clear invalid token
           Cookies.remove("auth-token");
           set({
             user: null,
             token: null,
-            roles: [],
-            stores: [],
             isAuthenticated: false,
             isLoading: false,
           });
         }
       },
 
+      // Dummy store functions
       addDummyStore: (store: Store) => {
-        if (get().token === "dummy-token-123") {
-          const current = JSON.parse(
-            localStorage.getItem("dummy-stores") || "[]"
-          );
-          const updated = [...current, store];
-          localStorage.setItem("dummy-stores", JSON.stringify(updated));
-          set({ stores: updated });
-        }
+        const currentStores = get().stores;
+        set({ stores: [...currentStores, store] });
       },
 
       getDummyStores: () => {
-        if (get().token === "dummy-token-123") {
-          const stores = JSON.parse(
-            localStorage.getItem("dummy-stores") || "[]"
-          );
-          set({ stores });
+        // Initialize with some dummy stores if empty
+        const currentStores = get().stores;
+        if (currentStores.length === 0) {
+          const dummyStores: Store[] = [
+            {
+              id: "1",
+              name: "Toko Sukses Jaya",
+              description: "Toko kelontong dan minimarket",
+              address: "Jl. Merdeka No. 123",
+              phone_number: "08123456789",
+              email: "toko@example.com",
+              package: "Pro",
+            },
+          ];
+          set({ stores: dummyStores });
         }
       },
     }),
@@ -164,9 +179,8 @@ export const useAuthStore = create<AuthStore>()(
       partialize: state => ({
         user: state.user,
         token: state.token,
-        roles: state.roles,
-        stores: state.stores,
         isAuthenticated: state.isAuthenticated,
+        stores: state.stores,
       }),
     }
   )

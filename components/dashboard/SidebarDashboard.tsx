@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { authApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { LogOut, Store as StoreIcon } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 import {
   Sheet,
   SheetContent,
@@ -14,7 +14,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 
-const navigationItems = [{ href: "/stores", label: "Store", icon: StoreIcon }];
+const navigationItems = [{ href: "/stores", label: "Toko", icon: StoreIcon }];
 
 interface SidebarDashboardProps {
   open: boolean;
@@ -27,14 +27,13 @@ export const SidebarDashboard = ({
 }: SidebarDashboardProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  // Dummy user name for avatar
-  const userName = "User";
+  const { user, logout } = useAuthStore();
+  const userName = user?.name || "User";
   const userInitial = userName.charAt(0).toUpperCase();
 
-  const handleLogout = () => {
-    authApi.logout();
+  const handleLogout = async () => {
+    await logout();
     router.push("/login");
-    router.refresh();
   };
 
   return (
@@ -110,7 +109,7 @@ export const SidebarDashboard = ({
                 }}
               >
                 <LogOut className="w-5 h-5 mr-3" />
-                Logout
+                Keluar
               </Button>
             </div>
           </div>
@@ -173,7 +172,7 @@ export const SidebarDashboard = ({
             onClick={handleLogout}
           >
             <LogOut className="w-5 h-5 mr-3" />
-            Logout
+            Keluar
           </Button>
         </div>
       </div>
