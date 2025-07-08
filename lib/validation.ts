@@ -28,14 +28,14 @@ export const registerSchema = z
       .string()
       .min(8, "Password minimal 8 karakter")
       .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/,
         "Password harus mengandung huruf besar, huruf kecil, angka, dan karakter khusus"
       ),
     password_confirmation: z.string().min(1, "Konfirmasi password wajib diisi"),
     phone_number: z
       .string()
       .min(10, "Nomor telepon minimal 10 digit")
-      .regex(/^\+?[0-9]+$/, "Format nomor telepon tidak valid"),
+      .regex(/^\d+$/, "Nomor telepon hanya boleh berisi angka"),
   })
   .refine(data => data.password === data.password_confirmation, {
     message: "Password tidak cocok",

@@ -15,22 +15,15 @@ export function useLogin() {
       setError(null);
 
       try {
-        // Login to get token
         const loginResponse = await authApi.login(credentials);
         const { access_token } = loginResponse;
-
-        // Store token
         setToken(access_token);
-
-        // Get user profile only if login was successful
         const user = await authApi.getProfile();
         setUser(user);
 
         return { user, token: access_token };
       } catch (error: any) {
-        // Clear any stored data on error
         clearAuth();
-
         const errorMessage = error.message || "Login failed";
         setError(errorMessage);
         throw error;
@@ -41,9 +34,6 @@ export function useLogin() {
     onSuccess: () => {
       router.push("/stores");
     },
-    onError: (error: any) => {
-      // Error is already handled in mutationFn
-    },
   });
 }
 
@@ -52,27 +42,41 @@ export function useUserProfile() {
   return useQuery({
     queryKey: ["user-profile"],
     queryFn: authApi.getProfile,
-    enabled: false, // Don't run automatically
+    enabled: false,
   });
 }
 
 // Hook for register mutation
 export function useRegister() {
   const router = useRouter();
+  const { setUser, setToken, setError, setLoading, clearAuth } = useAuthStore();
 
   return useMutation({
     mutationFn: async (credentials: RegisterCredentials) => {
-      const response = await authApi.register(credentials);
-      return response;
+      setLoading(true);
+      setError(null);
+      try {
+        await authApi.register(credentials);
+        const loginResponse = await authApi.login({
+          email: credentials.email,
+          password: credentials.password,
+        });
+        const { access_token } = loginResponse;
+        setToken(access_token);
+        const user = await authApi.getProfile();
+        setUser(user);
+        return { user, token: access_token };
+      } catch (error: any) {
+        clearAuth();
+        const errorMessage = error.message || "Registration failed";
+        setError(errorMessage);
+        throw error;
+      } finally {
+        setLoading(false);
+      }
     },
     onSuccess: () => {
-      router.push(
-        "/login?message=Registration successful! Please check your email to verify your account."
-      );
-    },
-    onError: (error: any) => {
-      // Error is handled by the mutation
-      throw error;
+      router.push("/stores");
     },
   });
 }
@@ -86,12 +90,11 @@ export function useLogout() {
     mutationFn: authApi.logout,
     onSuccess: () => {
       clearAuth();
-      router.push("/login");
+      // router.push("/login");
     },
     onError: (error: any) => {
-      // Still clear state even if API call fails
-      clearAuth();
-      router.push("/login");
+      // clearAuth();
+      // router.push("/login");
     },
   });
 }

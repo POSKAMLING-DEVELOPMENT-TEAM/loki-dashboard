@@ -69,12 +69,10 @@ export const authApi = {
         credentials
       );
 
-      // Extract message from nested data structure
       const message = response.data.data.message;
 
       return { message };
     } catch (error: any) {
-      // Handle specific error responses
       let errorMessage = "Registration failed";
       let errorStatus = error.response?.status;
 
@@ -112,15 +110,12 @@ export const authApi = {
         credentials
       );
 
-      // Extract access_token from nested data structure
       const accessToken = response.data.data.access_token;
 
       return { access_token: accessToken };
     } catch (error: any) {
-      // Handle specific error responses
       let errorMessage = "Login failed";
       let errorStatus = error.response?.status;
-
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
@@ -137,10 +132,7 @@ export const authApi = {
   getProfile: async (): Promise<User> => {
     try {
       const response = await apiClient.get<{ data: User }>("/auth/me");
-
-      // Extract user data from nested data structure
       const user = response.data.data;
-
       return user;
     } catch (error: any) {
       let errorMessage = "Failed to get user profile";
@@ -161,9 +153,9 @@ export const authApi = {
   // Logout (if backend has logout endpoint)
   logout: async (): Promise<void> => {
     try {
-      await apiClient.post("/auth/logout");
+      Cookies.remove("auth-token");
+      // await apiClient.post("/auth/logout");
     } catch (error) {
-      // Even if logout fails, we still clear the token
     } finally {
       Cookies.remove("auth-token");
     }
