@@ -4,7 +4,6 @@ import Cookies from "js-cookie";
 import { AuthStore, LoginCredentials, User } from "../types/auth";
 import { authApi } from "../lib/api";
 
-// Define Store type for dummy stores
 interface Store {
   id: string;
   name: string;
@@ -34,18 +33,11 @@ export const useAuthStore = create<
       login: async (credentials: LoginCredentials) => {
         try {
           set({ isLoading: true, error: null });
-
-          // Step 1: Call login API to get access token
           const loginResponse = await authApi.login(credentials);
           const { access_token } = loginResponse;
-
-          // Step 2: Store token in cookies
           Cookies.set("auth-token", access_token, { expires: 7 });
-
-          // Step 3: Get user profile using Bearer token
           const user = await authApi.getProfile();
 
-          // Step 4: Update state
           set({
             user,
             token: access_token,
@@ -66,16 +58,7 @@ export const useAuthStore = create<
         try {
           await authApi.logout();
         } catch (error) {
-          // Even if logout fails, we still clear the token
-        } finally {
-          // Clear state regardless of API call success
-          set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            error: null,
-            stores: [],
-          });
+          console.error("Logout failed:", error);
         }
       },
 
@@ -84,19 +67,15 @@ export const useAuthStore = create<
       },
 
       setToken: (token: string) => {
-        // Store token in cookies for persistence
         Cookies.set("auth-token", token, {
-          expires: 7, // 7 days
+          expires: 7,
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
         });
       },
 
       clearAuth: () => {
-        // Clear from cookies
         Cookies.remove("auth-token");
-
-        // Clear from store
         set({
           user: null,
           isAuthenticated: false,
@@ -127,7 +106,6 @@ export const useAuthStore = create<
 
           set({ isLoading: true });
 
-          // Get user profile using Bearer token
           const user = await authApi.getProfile();
 
           set({
@@ -137,7 +115,6 @@ export const useAuthStore = create<
             isLoading: false,
           });
         } catch (error) {
-          // Clear invalid token
           Cookies.remove("auth-token");
           set({
             user: null,
@@ -148,14 +125,12 @@ export const useAuthStore = create<
         }
       },
 
-      // Dummy store functions
       addDummyStore: (store: Store) => {
         const currentStores = get().stores;
         set({ stores: [...currentStores, store] });
       },
 
       getDummyStores: () => {
-        // Initialize with some dummy stores if empty
         const currentStores = get().stores;
         if (currentStores.length === 0) {
           const dummyStores: Store[] = [

@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormData } from "@/lib/validation";
@@ -11,18 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
 
 export default function LoginForm() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const loginMutation = useLogin();
 
-  // Check for success message from URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const message = urlParams.get("message");
     if (message) {
       setSuccessMessage(message);
-      // Clear the message from URL
       const newUrl = window.location.pathname;
       window.history.replaceState({}, "", newUrl);
     }
@@ -38,7 +35,6 @@ export default function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
-  // Auto-dismiss error after 5 seconds
   useEffect(() => {
     if (errors.root || loginMutation.isError) {
       const timer = setTimeout(() => {
@@ -50,7 +46,6 @@ export default function LoginForm() {
     }
   }, [errors.root, loginMutation.isError, clearErrors, loginMutation]);
 
-  // Auto-dismiss success message after 8 seconds
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => {
@@ -62,15 +57,11 @@ export default function LoginForm() {
   }, [successMessage]);
 
   const onSubmit = async (data: LoginFormData) => {
-    // Clear previous errors
     clearErrors();
 
     try {
       const result = await loginMutation.mutateAsync(data);
-
-      // Redirect will be handled by the mutation success
     } catch (error: any) {
-      // Handle specific error cases
       if (error.status === 401) {
         setError("root", {
           type: "manual",
@@ -100,7 +91,6 @@ export default function LoginForm() {
     e.preventDefault();
     e.stopPropagation();
 
-    // Check if form is valid before submitting
     if (Object.keys(errors).length > 0) {
       return;
     }
@@ -292,7 +282,7 @@ export default function LoginForm() {
             <Button
               type="submit"
               disabled={loginMutation.isPending}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 hover:cursor-pointer"
             >
               {loginMutation.isPending ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -343,16 +333,13 @@ export default function LoginForm() {
           </div>
 
           <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Belum punya akun?{" "}
-              <button
-                type="button"
-                onClick={() => router.push("/register")}
-                className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
-              >
-                Daftar di sini
-              </button>
-            </p>
+            <p className="text-sm text-gray-600">Belum punya akun?</p>
+            <Link
+              href="/register"
+              className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+            >
+              Daftar disini
+            </Link>
           </div>
         </form>
       </div>
